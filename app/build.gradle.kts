@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -20,6 +22,16 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        val keyFile = project.rootProject.file("api.properties")
+        val properties = Properties()
+        properties.load(keyFile.inputStream())
+        val apiKey = properties.getProperty("NEWS_API_KEY") ?: ""
+        buildConfigField(
+            type = "String",
+            name = "NEWS_API_KEY",
+            value = apiKey
+        )
     }
 
     buildTypes {
@@ -39,6 +51,7 @@ android {
         jvmTarget = "1.8"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     composeOptions {
