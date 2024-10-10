@@ -17,14 +17,22 @@ class NewsViewModel @Inject constructor(private val repository: NewsRepository) 
     private val _news = MutableLiveData<List<Article>>(emptyList())
     val news: LiveData<List<Article>> = _news
 
-    fun getNews(country: String = "us") {
+    fun getNews(type: NewsType, query: String? = null, country: String = "us") {
         viewModelScope.launch {
             try {
-                val response = repository.getTopHeadlines(country)
+                val response = when (type) {
+                    NewsType.BREAKING -> repository.getTopHeadlines(country)
+                    NewsType.SEARCH -> repository.getSearchNews(query ?: "")
+                }
                 _news.value = response.articles
             } catch (e: Exception) {
                 Log.i("Error", e.message.toString())
             }
         }
     }
+}
+
+enum class NewsType {
+    BREAKING,
+    SEARCH
 }

@@ -2,7 +2,6 @@ package com.sol.news.presentation
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -33,17 +31,23 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.sol.news.domain.model.Article
 
 @Composable
-fun NewsListScreen(newsViewModel: NewsViewModel = hiltViewModel()) {
+fun NewsListScreen(
+    newsType: NewsType,
+    searchQuery: String? = null,
+    newsViewModel: NewsViewModel = hiltViewModel()
+) {
     val news by newsViewModel.news.observeAsState(emptyList())
     var selectedArticle by remember { mutableStateOf<Article?>(null) }
 
     LaunchedEffect(true) {
-        newsViewModel.getNews()
+        when (newsType) {
+            NewsType.BREAKING -> newsViewModel.getNews(NewsType.BREAKING)
+            NewsType.SEARCH -> newsViewModel.getNews(NewsType.SEARCH, query = searchQuery)
+        }
     }
 
     Box(
@@ -146,9 +150,4 @@ fun ArticleDialog(article: Article, onDismiss: () -> Unit) {
 @Composable
 fun SavedNewsScreen(modifier: Modifier = Modifier) {
     Text(text = "Saved News", modifier = modifier.padding(16.dp))
-}
-
-@Composable
-fun SearchNewsScreen(modifier: Modifier = Modifier) {
-    Text(text = "Search News", modifier = modifier.padding(16.dp))
 }

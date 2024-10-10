@@ -9,4 +9,8 @@ class NewsRepository @Inject constructor(private val api: NewsApi) {
     suspend fun getTopHeadlines(country: String): NewsResponse {
         return api.getTopHeadlines(country)
     }
+
+    suspend fun getSearchNews(query: String): NewsResponse {
+        return api.getSearchNews(query)
+    }
 }

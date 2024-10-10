@@ -9,7 +9,13 @@ interface NewsApi {
 
     @GET("top-headlines")
     suspend fun getTopHeadlines(
-        @Query("country") country: String="us",
-        @Query("apiKey") apiKey:String= BuildConfig.NEWS_API_KEY
-    ):NewsResponse
+        @Query("country") country: String = "us",
+        @Query("apiKey") apiKey: String = BuildConfig.NEWS_API_KEY
+    ): NewsResponse
+
+    @GET("everything")
+    suspend fun getSearchNews(
+        @Query("q") query: String,
+        @Query("apiKey") apiKey: String = BuildConfig.NEWS_API_KEY
+    ): NewsResponse
 }
