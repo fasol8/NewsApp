@@ -16,8 +16,7 @@ fun NewsNavHost(navController: NavHostController) {
         composable(NewsScreen.NewsListScreen.route) { NewsListScreen(newsType = NewsType.BREAKING) }
         composable(NewsScreen.SavedNewsScreen.route) { SavedNewsScreen() }
         composable(NewsScreen.SearchNewsScreen.route) {
-            val query = "apple"
-            NewsListScreen(newsType = NewsType.SEARCH, searchQuery = query)
+            NewsListScreen(newsType = NewsType.SEARCH)
         }
     }
 }

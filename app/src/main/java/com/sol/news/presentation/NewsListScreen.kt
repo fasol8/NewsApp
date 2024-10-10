@@ -2,6 +2,7 @@ package com.sol.news.presentation
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,11 +13,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,24 +37,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.sol.news.R
 import com.sol.news.domain.model.Article
 
 @Composable
 fun NewsListScreen(
     newsType: NewsType,
-    searchQuery: String? = null,
     newsViewModel: NewsViewModel = hiltViewModel()
 ) {
     val news by newsViewModel.news.observeAsState(emptyList())
     var selectedArticle by remember { mutableStateOf<Article?>(null) }
+    var query by remember { mutableStateOf("") }
 
     LaunchedEffect(true) {
         when (newsType) {
             NewsType.BREAKING -> newsViewModel.getNews(NewsType.BREAKING)
-            NewsType.SEARCH -> newsViewModel.getNews(NewsType.SEARCH, query = searchQuery)
+            NewsType.SEARCH -> newsViewModel.getNews(NewsType.SEARCH)
         }
     }
 
@@ -56,7 +66,17 @@ fun NewsListScreen(
             .padding(4.dp)
     ) {
         Column {
-            Spacer(modifier = Modifier.height(32.dp))
+            if (newsType == NewsType.SEARCH) {
+                SearchBar(
+                    query = query,
+                    onQueryChange = { query = it },
+                    onSearch = {
+                        newsViewModel.getNews(newsType, query)
+                    }
+                )
+            } else {
+                Spacer(modifier = Modifier.height(32.dp))
+            }
             LazyColumn {
                 items(news.size) { index ->
                     val article = news[index]
@@ -146,6 +166,64 @@ fun ArticleDialog(article: Article, onDismiss: () -> Unit) {
                 Text(text = "Open Article")
             }
         }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: (String) -> Unit
+) {
+    var active by remember { mutableStateOf(false) }
+
+    val colors1 = SearchBarDefaults.colors()
+    SearchBar(
+        inputField = {
+            SearchBarDefaults.InputField(
+                query = query,
+                onQueryChange = { onQueryChange(it) },
+                onSearch = {
+                    onSearch(query)
+                    active = false // Cierra el SearchBar después de buscar
+                },
+                expanded = active,
+                onExpandedChange = { active = it },
+                enabled = true,
+                placeholder = { Text("Search news...") },
+                leadingIcon = {
+                    Icon(
+                        painterResource(id = R.drawable.ic_search),
+                        contentDescription = null
+                    )
+                },
+                trailingIcon = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = {
+                            onQueryChange("")
+                            active = false
+                            onSearch("")
+                        }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                        }
+                    }
+                },
+                colors = colors1.inputFieldColors,
+                interactionSource = null,
+            )
+        },
+        expanded = active,
+        onExpandedChange = { active = it },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        shape = SearchBarDefaults.inputFieldShape,
+        colors = colors1,
+        tonalElevation = SearchBarDefaults.TonalElevation,
+        shadowElevation = SearchBarDefaults.ShadowElevation,
+        windowInsets = SearchBarDefaults.windowInsets,
+        content = {},
     )
 }
 
