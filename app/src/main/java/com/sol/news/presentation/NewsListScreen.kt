@@ -21,7 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sol.news.domain.model.Article
 
 @Composable
-fun NewsScreen(newsViewModel: NewsViewModel = hiltViewModel()) {
+fun NewsListScreen(newsViewModel: NewsViewModel = hiltViewModel()) {
     val news by newsViewModel.news.observeAsState(emptyList())
 
     LaunchedEffect(true) {
@@ -53,4 +53,14 @@ fun CardNewItem(new: Article) {
             Text(text = new.author ?: "", style = MaterialTheme.typography.titleSmall)
         }
     }
+}
+
+@Composable
+fun SavedNewsScreen(modifier: Modifier = Modifier) {
+    Text(text = "Saved News", modifier = modifier.padding(16.dp))
+}
+
+@Composable
+fun SearchNewsScreen(modifier: Modifier = Modifier) {
+    Text(text = "Search News", modifier = modifier.padding(16.dp))
 }
