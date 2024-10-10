@@ -60,8 +60,10 @@ fun NewsListScreen(
             LazyColumn {
                 items(news.size) { index ->
                     val article = news[index]
-                    CardArticleItem(article) {
-                        selectedArticle = article
+                    if (article.title != "[Removed]") {
+                        CardArticleItem(article) {
+                            selectedArticle = article
+                        }
                     }
                 }
             }
