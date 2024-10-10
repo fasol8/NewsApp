@@ -7,10 +7,12 @@ import androidx.navigation.compose.composable
 import com.sol.news.presentation.NewsListScreen
 import com.sol.news.presentation.SavedNewsScreen
 import com.sol.news.presentation.SearchNewsScreen
+import com.sol.news.presentation.SplashScreen
 
 @Composable
 fun NewsNavHost(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = NewsScreen.NewsListScreen.route) {
+    NavHost(navController = navController, startDestination = NewsScreen.NewsSplashScreen.route) {
+        composable(NewsScreen.NewsSplashScreen.route) { SplashScreen(navController) }
         composable(NewsScreen.NewsListScreen.route) { NewsListScreen() }
         composable(NewsScreen.SavedNewsScreen.route) { SavedNewsScreen() }
         composable(NewsScreen.SearchNewsScreen.route) { SearchNewsScreen() }
