@@ -2,7 +2,7 @@ package com.sol.news.presentation
 
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
+import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,6 +43,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.sol.news.R
 import com.sol.news.domain.model.Article
+import com.sol.news.utils.formatDate
 
 @Composable
 fun NewsListScreen(
@@ -145,7 +146,9 @@ fun ArticleDialog(article: Article, onDismiss: () -> Unit) {
             Column {
                 Text(text = "Author: ${article.author ?: "Unknown"}")
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = article.publishedAt ?: "????-??-??")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    Text(text = formatDate(article.publishedAt) ?: "????-??-??")
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = article.description ?: "No description available")
                 Spacer(modifier = Modifier.height(8.dp))
