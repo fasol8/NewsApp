@@ -1,5 +1,6 @@
-package com.sol.news.data.network
+package com.sol.news.di
 
+import com.sol.news.data.network.NewsApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

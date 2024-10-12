@@ -3,6 +3,7 @@ package com.sol.news.presentation
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -33,6 +35,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -54,11 +57,8 @@ fun NewsListScreen(
     var selectedArticle by remember { mutableStateOf<Article?>(null) }
     var query by remember { mutableStateOf("") }
 
-    LaunchedEffect(true) {
-        when (newsType) {
-            NewsType.BREAKING -> newsViewModel.getNews(NewsType.BREAKING)
-            NewsType.SEARCH -> newsViewModel.getNews(NewsType.SEARCH)
-        }
+    LaunchedEffect(newsType) {
+        newsViewModel.getNews(newsType)
     }
 
     Box(
@@ -78,12 +78,18 @@ fun NewsListScreen(
             } else {
                 Spacer(modifier = Modifier.height(32.dp))
             }
-            LazyColumn {
-                items(news.size) { index ->
-                    val article = news[index]
-                    if (article.title != "[Removed]") {
-                        CardArticleItem(article) {
-                            selectedArticle = article
+            if (news.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = "No news", style = MaterialTheme.typography.titleLarge)
+                }
+            } else {
+                LazyColumn {
+                    items(news.size) { index ->
+                        val article = news[index]
+                        if (article.title != "[Removed]") {
+                            CardArticleItem(article, newsViewModel) {
+                                selectedArticle = article
+                            }
                         }
                     }
                 }
@@ -91,7 +97,7 @@ fun NewsListScreen(
         }
 
         selectedArticle?.let { article ->
-            ArticleDialog(article) {
+            ArticleDialog(article, newsViewModel) {
                 selectedArticle = null // Cierra el diálogo
             }
         }
@@ -99,7 +105,19 @@ fun NewsListScreen(
 }
 
 @Composable
-fun CardArticleItem(article: Article, onClick: () -> Unit) {
+fun CardArticleItem(
+    article: Article,
+    newsViewModel: NewsViewModel,
+    onClick: () -> Unit
+) {
+    var isSaved by remember { mutableStateOf(false) }
+
+    LaunchedEffect(article) {
+        newsViewModel.isArticleSaved(article) { saved ->
+            isSaved = saved
+        }
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -114,7 +132,7 @@ fun CardArticleItem(article: Article, onClick: () -> Unit) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .width(150.dp)
-                    .height(100.dp)
+                    .height(120.dp)
             )
             Spacer(modifier = Modifier.width(4.dp))
             Column {
@@ -123,20 +141,50 @@ fun CardArticleItem(article: Article, onClick: () -> Unit) {
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 3
                 )
-                Text(
-                    text = article.author ?: "Unknown",
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    color = Color.Gray
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = article.author ?: "Unknown",
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        color = Color.Gray,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = {
+                        if (isSaved) {
+                            newsViewModel.deleteArticleByUrl(article.url)
+                            isSaved = false
+                        } else {
+                            newsViewModel.saveArticle(article)
+                            isSaved = true
+                        }
+                    }) {
+                        Icon(
+                            painter = painterResource(if (isSaved) R.drawable.ic_bookmark_fill else R.drawable.ic_bookmark_border),
+                            contentDescription = "bookmark",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun ArticleDialog(article: Article, onDismiss: () -> Unit) {
+fun ArticleDialog(article: Article, newsViewModel: NewsViewModel, onDismiss: () -> Unit) {
     val context = LocalContext.current
+    var isSaved by remember { mutableStateOf(false) }
+
+    LaunchedEffect(article) {
+        newsViewModel.isArticleSaved(article) { saved ->
+            isSaved = saved
+        }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -144,10 +192,30 @@ fun ArticleDialog(article: Article, onDismiss: () -> Unit) {
         },
         text = {
             Column {
-                Text(text = "Author: ${article.author ?: "Unknown"}")
-                Spacer(modifier = Modifier.height(4.dp))
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Text(text = formatDate(article.publishedAt) ?: "????-??-??")
+                Row {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "Author: ${article.author ?: "Unknown"}")
+                        Spacer(modifier = Modifier.height(4.dp))
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            Text(text = formatDate(article.publishedAt) ?: "????-??-??")
+                        }
+                    }
+                    IconButton(onClick = {
+                        if (isSaved) {
+                            newsViewModel.deleteArticleByUrl(article.url)
+                            isSaved = false
+                        } else {
+                            newsViewModel.saveArticle(article)
+                            isSaved = true
+                        }
+                    }) {
+                        Icon(
+                            painter = painterResource(if (isSaved) R.drawable.ic_bookmark_fill else R.drawable.ic_bookmark_border),
+                            contentDescription = "bookmark",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = article.description ?: "No description available")

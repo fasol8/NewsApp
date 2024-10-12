@@ -41,7 +41,7 @@ fun BottomBar(navController: NavController) {
         BottomNavigationItem(
             icon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_bookmark),
+                    painter = painterResource(id = R.drawable.ic_bookmarks),
                     contentDescription = "Saved News"
                 )
             },
