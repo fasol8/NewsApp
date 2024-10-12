@@ -22,8 +22,10 @@ import androidx.compose.material.DismissDirection
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.SwipeToDismiss
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.rememberDismissState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -134,12 +136,18 @@ fun SwipeableArticleItem(
         }
     }
 
+    if (dismissState.isDismissed(DismissDirection.StartToEnd) && !isSaved) {
+        newsViewModel.saveArticle(article)
+        isSaved = true
+    }
+
     SwipeToDismiss(
         state = dismissState,
-        directions = setOf(DismissDirection.EndToStart), // Deslizar a la izquierda
+        directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
         background = {
             val color = when (dismissState.dismissDirection) {
                 DismissDirection.EndToStart -> Color.Red
+                DismissDirection.StartToEnd -> Color.Green
                 else -> Color.Transparent
             }
             Box(
@@ -147,11 +155,19 @@ fun SwipeableArticleItem(
                     .fillMaxSize()
                     .background(color)
                     .padding(16.dp),
-                contentAlignment = Alignment.CenterEnd
+                contentAlignment = when (dismissState.dismissDirection) {
+                    DismissDirection.EndToStart -> Alignment.CenterEnd
+                    DismissDirection.StartToEnd -> Alignment.CenterStart
+                    else -> Alignment.Center
+                }
             ) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
+                    imageVector = when (dismissState.dismissDirection) {
+                        DismissDirection.EndToStart -> Icons.Default.Delete
+                        DismissDirection.StartToEnd -> Icons.Default.Favorite
+                        else -> Icons.Default.Check
+                    },
+                    contentDescription = "Swipe Action",
                     tint = Color.White
                 )
             }
@@ -315,7 +331,7 @@ fun SearchBar(
                 onQueryChange = { onQueryChange(it) },
                 onSearch = {
                     onSearch(query)
-                    active = false // Cierra el SearchBar después de buscar
+                    active = false
                 },
                 expanded = active,
                 onExpandedChange = { active = it },
@@ -354,9 +370,4 @@ fun SearchBar(
         windowInsets = SearchBarDefaults.windowInsets,
         content = {},
     )
-}
-
-@Composable
-fun SavedNewsScreen(modifier: Modifier = Modifier) {
-    Text(text = "Saved News", modifier = modifier.padding(16.dp))
 }
