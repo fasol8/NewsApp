@@ -1,8 +1,11 @@
+@file:OptIn(ExperimentalMaterialApi::class)
+
 package com.sol.news.presentation
 
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,8 +18,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.DismissDirection
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.SwipeToDismiss
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.rememberDismissState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -87,7 +95,7 @@ fun NewsListScreen(
                     items(news.size) { index ->
                         val article = news[index]
                         if (article.title != "[Removed]") {
-                            CardArticleItem(article, newsViewModel) {
+                            SwipeableArticleItem(article, newsViewModel) {
                                 selectedArticle = article
                             }
                         }
@@ -102,6 +110,56 @@ fun NewsListScreen(
             }
         }
     }
+}
+
+@Composable
+fun SwipeableArticleItem(
+    article: Article,
+    newsViewModel: NewsViewModel,
+    onClick: () -> Unit
+) {
+    var isSaved by remember { mutableStateOf(false) }
+
+    LaunchedEffect(article) {
+        newsViewModel.isArticleSaved(article) { saved ->
+            isSaved = saved
+        }
+    }
+
+    val dismissState = rememberDismissState()
+
+    if (dismissState.isDismissed(DismissDirection.EndToStart) && isSaved) {
+        LaunchedEffect(article) {
+            newsViewModel.deleteArticleByUrl(article.url)
+        }
+    }
+
+    SwipeToDismiss(
+        state = dismissState,
+        directions = setOf(DismissDirection.EndToStart), // Deslizar a la izquierda
+        background = {
+            val color = when (dismissState.dismissDirection) {
+                DismissDirection.EndToStart -> Color.Red
+                else -> Color.Transparent
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color)
+                    .padding(16.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete",
+                    tint = Color.White
+                )
+            }
+        },
+        dismissContent = {
+            CardArticleItem(article, newsViewModel, onClick)
+        }
+    )
 }
 
 @Composable
